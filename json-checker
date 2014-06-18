@@ -1,0 +1,105 @@
+#!/usr/bin/env python
+# coding: utf-8
+import sys
+if (sys.version_info[0] * 10000 + sys.version_info[1]) < (2 * 10000 + 6):
+    exit('This script is required >= python 2.6')
+
+import glob
+import json
+import os
+import re
+import subprocess
+from optparse import OptionParser
+
+def _color(c, str):
+    return "%s%s%s" % (colors[c], str, colors['clear'])
+
+def _check_json(file):
+    return os.path.splitext(file)[1] == '.json'
+
+def _recursive_dirs(dir):
+    for root, dirs, files in os.walk(dir, followlinks=options.followlinks):
+        for file in files:
+            if _check_json(file):
+                yield os.path.join(root, file)
+
+def _dirs(dir):
+    for file in os.listdir(dir):
+        abspath = os.path.join(os.path.abspath(dir), file)
+        if os.path.isfile(abspath) and _check_json(abspath):
+            yield abspath
+
+def _files(pathname):
+    for f in glob.glob(pathname):
+        abspath = os.path.abspath(f)
+        if os.path.isfile(abspath) and _check_json(abspath):
+            yield abspath
+
+def _check_syntax(files):
+    (_ok, _error) = (0, 0)
+    
+    for file in files:
+        fp = open(file, "r")
+        try:
+            json.load(fp)
+            print _color("cyan", file)
+            print _color('green', "syntax ok")
+            _ok = _ok + 1
+        except ValueError as e:
+            print _color("cyan", file)
+            print _color("red", "syntax error")
+            print e
+            _error = _error + 1
+        fp.close()
+        print
+
+    return {"ok": _ok, "error": _error}
+
+_usage = "Usage: %prog [option] ARG...\n\nARG    file and directory"
+
+parser = OptionParser(usage = _usage)
+parser.add_option("-r", "--recursive", dest="recursive", action="store_true", default=False,
+                  help="check directories recursively")
+parser.add_option("-L", dest="followlinks", action="store_true", default=False,
+                  help="follow symlinks")
+
+(options, args) = parser.parse_args()
+
+if not args:
+    parser.print_help()
+    exit(0)
+
+for arg in args:
+    if not os.path.exists(arg):
+        exit("No such file or directory: '%s'" % arg)
+                
+colors = {
+    'clear': '\033[0m',
+    'red': '\033[31m',
+    'green': '\033[32m',
+    'cyan': '\033[36m',
+}
+
+cnts  = {}
+ok    = 0
+error = 0
+
+for arg in args:
+    if os.path.isfile(arg):
+        cnts   = _check_syntax(_files(arg))
+        ok    += cnts["ok"]
+        error += cnts["error"]
+    elif options.recursive:
+        cnts   = _check_syntax(_recursive_dirs(os.path.abspath(arg)))
+        ok    += cnts["ok"]
+        error += cnts["error"]
+    elif not options.recursive:
+        cnts   = _check_syntax(_dirs(arg))
+        ok    += cnts["ok"]
+        error += cnts["error"]
+                     
+print _color("green", "ok:\t%s"    % ok)
+print _color("red",   "error:\t%s" % error)
+
+if error > 0:
+    exit(1)
