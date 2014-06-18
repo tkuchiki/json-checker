@@ -1,0 +1,4 @@
+json-checker
+============
+
+Validate JSON
