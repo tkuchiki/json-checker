@@ -21,5 +21,5 @@ Options:
   -h, --help       show this help message and exit
   -r, --recursive  check directories recursively
   -L               follow symlinks
+  -q, --quiet      quiet mode
 ~~~~
-
