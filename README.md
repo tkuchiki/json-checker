@@ -1,7 +1,7 @@
 json-checker
 ============
 
-Validate JSON
+Checker utility for JSON syntax.
 
 ## Installation
 
