@@ -1,8 +1,13 @@
 #!/usr/bin/env python
 # coding: utf-8
 import sys
-if (sys.version_info[0] * 10000 + sys.version_info[1]) < (2 * 10000 + 6):
-    exit('This script is required >= python 2.6')
+from distutils.version import StrictVersion
+
+support_version = "2.6"
+current_version = "%s.%s" % (sys.version_info[0], sys.version_info[1])
+
+if StrictVersion(current_version) < StrictVersion(support_version):
+    exit('This script is required >= python %s' % (support_version))
 
 import glob
 import json
